@@ -35,6 +35,7 @@ export async function connectToMongoDB() {
 
 const connectedClient = await connectToMongoDB();
 const db = connectedClient.db('hireloop');
+const usersCollection = db.collection('user');
 const jobsCollection = db.collection('jobs');
 
 
@@ -42,6 +43,14 @@ const jobsCollection = db.collection('jobs');
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
+
+// get all users
+app.get('/users', async (req, res) => {
+  const cursor = usersCollection.find({});
+  const users = await cursor.toArray();
+  res.send(users);
+});
+
 
 
 app.listen(port, () => {
