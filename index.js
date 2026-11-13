@@ -187,6 +187,7 @@ app.options('/jobs', cors(corsOptions));
 app.post('/jobs', cors(corsOptions), express.json(), verifyToken, requireRecruiter, handleErrors(async (req, res) => {
   const {
     title,
+    companyName,
     category,
     jobType,
     isRemote,
@@ -202,6 +203,7 @@ app.post('/jobs', cors(corsOptions), express.json(), verifyToken, requireRecruit
   // Simple required-field validation.
   const missing = [];
   if (!title) missing.push('title');
+  if (!companyName) missing.push('companyName');
   if (!category) missing.push('category');
   if (!jobType) missing.push('jobType');
   if (!location) missing.push('location');
@@ -216,6 +218,7 @@ app.post('/jobs', cors(corsOptions), express.json(), verifyToken, requireRecruit
 
   const job = {
     title,
+    companyName,
     category,
     jobType,
     isRemote: Boolean(isRemote),
