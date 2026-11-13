@@ -73,6 +73,16 @@ function handleErrors(handler) {
   };
 }
 
+// Better Auth signs its session cookie value as "<token>.<hmac-signature>"
+// (URL-encoded) but stores only the raw token in the database. Strip the
+// signature part before the lookup. This is safe because session tokens are
+// random strings over a-zA-Z0-9 and never contain a "." themselves.
+function extractSessionToken(cookieValue) {
+  const decoded = decodeURIComponent(cookieValue);
+  const dotIndex = decoded.indexOf('.');
+  return dotIndex === -1 ? decoded : decoded.slice(0, dotIndex);
+}
+
 // ---- Middleware (attached per route, not globally) --------------------------
 
 // Checks the "Authorization: Bearer <token>" header and saves the decoded
@@ -133,8 +143,11 @@ app.post('/auth/token', cors(corsOptions), handleErrors(async (req, res) => {
     return res.status(401).json({ message: 'No Better Auth session found. Please sign in first.' });
   }
 
-  // 1. The session must exist and not be expired.
-  const session = await sessionsCollection.findOne({ token: sessionToken });
+  // 1. The session must exist and not be expired. The cookie value may carry
+  // a HMAC signature ("<token>.<signature>"), so strip it before matching.
+  const session = await sessionsCollection.findOne({
+    token: extractSessionToken(sessionToken),
+  });
   if (!session || new Date(session.expiresAt) <= new Date()) {
     return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
   }
